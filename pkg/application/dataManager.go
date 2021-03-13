@@ -24,3 +24,7 @@ func (dm *DataManager) GetRequestList() ([]entity.Req, error) {
 func (dm *DataManager) GetRequestById(id int64) (entity.Req, error) {
 	return dm.db.GetRequestById(id)
 }
+
+func (dm *DataManager) GetRequestHeaders(id int64) (entity.Req, error) {
+	return dm.db.GetRequestHeaders(id)
+}

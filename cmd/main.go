@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/jackc/pgx"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -47,20 +48,34 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer conn.Close()
 
 	db := infrasctructure.CreateDatabaseConnection(conn)
 	manager := application.NewDataManager(db)
 
 	proxy := interfaces.NewProxy(manager)
+	interceptorRouter := mux.NewRouter()
+	interceptorRouter.HandleFunc("/", proxy.Intercept)
+	interceptorRouter.HandleFunc("/requests", proxy.AllRequests).
+		Methods(http.MethodGet)
+	interceptorRouter.HandleFunc("/request/{id}", proxy.RequestById).
+		Methods(http.MethodGet)
+	interceptorRouter.HandleFunc("/scan/{id}", proxy.ScanRequest).
+		Methods(http.MethodGet)
+
 	interceptor := &http.Server{
 		Addr:         ":" + viper.GetString("server.interceptor_port"),
-		Handler:      http.HandlerFunc(proxy.Intercept),
+		Handler:      interceptorRouter,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
 	}
 
+	repeaterRouter := mux.NewRouter()
+	repeaterRouter.HandleFunc("/repeat/{id}", proxy.Repeat).
+		Methods(http.MethodGet)
+
 	repeater := &http.Server{
 		Addr:         ":" + viper.GetString("server.repeater_port"),
-		Handler:      http.HandlerFunc(proxy.Repeat),
+		Handler:      repeaterRouter,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
 	}
 
