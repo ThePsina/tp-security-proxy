@@ -5,20 +5,31 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/httputil"
+	"proxy/pkg/domain/entity"
 	"time"
 )
 
-func Intercept(w http.ResponseWriter, r *http.Request) {
+func (proxy *Proxy) Intercept(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodConnect {
-		tunnel(w, r)
+		proxy.tunnel(w, r)
 		return
 	}
 
-	proxy(w, r)
+	proxy.proxy(w, r)
 }
 
-func proxy(w http.ResponseWriter, r *http.Request) {
-	// #TODO: add writing request to db
+func (proxy *Proxy) proxy(w http.ResponseWriter, r *http.Request) {
+	dump, err := httputil.DumpRequest(r, true)
+	if err != nil {
+		log.Println(err)
+	}
+
+	req := entity.Req{Host: r.Host, Request: string(dump)}
+	if err = proxy.dm.Insert(req); err != nil {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
 
 	resp, err := http.DefaultTransport.RoundTrip(r)
 	if err != nil {
@@ -46,7 +57,7 @@ func proxy(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func tunnel(w http.ResponseWriter, r *http.Request) {
+func (proxy *Proxy) tunnel(w http.ResponseWriter, r *http.Request) {
 	dstConn, err := net.DialTimeout("tcp", r.Host, 10*time.Second)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)

@@ -1,0 +1,19 @@
+version: "3.8"
+services:
+  go:
+    build:
+      context: ..
+      dockerfile: "deploy/go.Dockerfile"
+    ports:
+      - 127.0.0.1:8081:8081
+      - 127.0.0.1:8082:8082
+    command: ["-c", "/app/config.yml"]
+    depends_on:
+      - postgres
+
+  postgres:
+    build:
+      context: ..
+      dockerfile: "deploy/postgres.Dockerfile"
+    environment:
+      - POSTGRES_PASSWORD=password
