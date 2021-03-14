@@ -22,7 +22,7 @@ func (proxy *Proxy) Intercept(w http.ResponseWriter, r *http.Request) {
 func (proxy *Proxy) proxy(w http.ResponseWriter, r *http.Request) {
 	dump, err := httputil.DumpRequest(r, true)
 	if err != nil {
-		log.Println(err)
+		log.Println("from proxy dump error: ", err)
 	}
 
 	req := entity.Req{Request: string(dump), Host: r.Host, Headers: http.Header{}}
@@ -39,7 +39,7 @@ func (proxy *Proxy) proxy(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() {
 		if err = resp.Body.Close(); err != nil {
-			log.Println(err)
+			log.Println("from proxy body close error: ",err)
 		}
 	}()
 
@@ -54,7 +54,7 @@ func (proxy *Proxy) proxy(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(resp.StatusCode)
 	if _, err = io.Copy(w, resp.Body); err != nil {
-		log.Println(err)
+		log.Println("from proxy copy error: ", err)
 	}
 }
 
@@ -98,16 +98,16 @@ func (proxy *Proxy) tunnel(w http.ResponseWriter, r *http.Request) {
 func transfer(destination io.WriteCloser, source io.ReadCloser) {
 	defer func() {
 		if err := destination.Close(); err != nil {
-			log.Println(err)
+			log.Println("from transfer dst close error: ", err)
 		}
 	}()
 	defer func() {
 		if err := source.Close(); err != nil {
-			log.Println(err)
+			log.Println("from transfer src close error: ", err)
 		}
 	}()
 
 	if _, err := io.Copy(destination, source); err != nil {
-		log.Println(err)
+		log.Println("from transfer copy error: ", err)
 	}
 }

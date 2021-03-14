@@ -2,7 +2,6 @@ package infrasctructure
 
 import (
 	"context"
-	"fmt"
 	"github.com/jackc/pgx"
 	"github.com/spf13/viper"
 	"net/http"
@@ -36,10 +35,11 @@ func (db *Database) Insert(req entity.Req) error {
 	err = tx.QueryRow("insert into requests (host, request) values ($1, $2) returning id", req.Host, req.Request).
 		Scan(&id)
 
-	fmt.Println("\n", id, "\n\n")
-
 	for key, vval := range req.Headers {
 		for _, val := range vval {
+			if key == "Proxy-Connection" {
+				continue
+			}
 			_, err = tx.Exec("insert into headers (req_id, key, val) values ($1, $2, $3)", id, key, val)
 			if err != nil {
 				return err

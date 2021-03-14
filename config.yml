@@ -7,7 +7,10 @@ postgres:
 
 server:
   interceptor_port: 8081
-  repeater_posrt: 8082
+  repeater_port: 8082
+  timeout:
+    write: 10
+    read: 10
 
 db_connection:
   timing: 5

@@ -13,6 +13,7 @@ import (
 	"proxy/pkg/application"
 	"proxy/pkg/infrasctructure"
 	"proxy/pkg/interfaces"
+	"time"
 )
 
 func init() {
@@ -54,32 +55,33 @@ func main() {
 	manager := application.NewDataManager(db)
 
 	proxy := interfaces.NewProxy(manager)
-	interceptorRouter := mux.NewRouter()
-	interceptorRouter.HandleFunc("/", proxy.Intercept)
-	interceptorRouter.HandleFunc("/requests", proxy.AllRequests).
-		Methods(http.MethodGet)
-	interceptorRouter.HandleFunc("/request/{id}", proxy.RequestById).
-		Methods(http.MethodGet)
-	interceptorRouter.HandleFunc("/scan/{id}", proxy.ScanRequest).
-		Methods(http.MethodGet)
-
 	interceptor := &http.Server{
+		ReadTimeout:  viper.GetDuration("server.timeout.read") * time.Second,
+		WriteTimeout: viper.GetDuration("server.timeout.write") * time.Second,
 		Addr:         ":" + viper.GetString("server.interceptor_port"),
-		Handler:      interceptorRouter,
+		Handler:      http.HandlerFunc(proxy.Intercept),
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
 	}
 
 	repeaterRouter := mux.NewRouter()
 	repeaterRouter.HandleFunc("/repeat/{id}", proxy.Repeat).
 		Methods(http.MethodGet)
+	repeaterRouter.HandleFunc("/requests", proxy.AllRequests).
+		Methods(http.MethodGet)
+	repeaterRouter.HandleFunc("/request/{id}", proxy.RequestById).
+		Methods(http.MethodGet)
+	repeaterRouter.HandleFunc("/scan/{id}", proxy.ScanRequest).
+		Methods(http.MethodGet)
 
 	repeater := &http.Server{
+		ReadTimeout:  viper.GetDuration("server.timeout.read") * time.Second,
+		WriteTimeout: viper.GetDuration("server.timeout.write") * time.Second,
 		Addr:         ":" + viper.GetString("server.repeater_port"),
 		Handler:      repeaterRouter,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
 	}
 
-	go func() {
+	go func() {fmt.Println("*")
 		log.Fatal(repeater.ListenAndServe())
 	}()
 
