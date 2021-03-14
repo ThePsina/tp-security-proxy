@@ -11,7 +11,20 @@
 
 Учебная группа: АПО-31
 
-# Перед запуском
+# Необходимо
+```
+1) docker
+2) docker-compose
+```
+
+# Запуск
 ```
 - docker-compose -f deploy/docker-compose.yml up -d -build
+```
+
+# Зайти в базу
+```
+- docker-compose -f deploy/docker-compose.yml exec /bin/bash
+- su postgres
+- psql -U thepsina -d db
 ```
