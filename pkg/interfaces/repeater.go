@@ -25,6 +25,7 @@ func (proxy *Proxy) Repeat(w http.ResponseWriter, r *http.Request) {
 			return http.ErrUseLastResponse
 		},
 	}
+	defer client.CloseIdleConnections()
 
 	newRequest, err := createNewRequest(storedRequest)
 	if err != nil {
@@ -51,7 +52,7 @@ func createNewRequest(storedRequest entity.Req) (*http.Request, error) {
 		return nil, err
 	}
 
-	newRequest, err := http.NewRequest(buffer.Method, "http://"+storedRequest.Host, buffer.Body)
+	newRequest, err := http.NewRequest(buffer.Method, storedRequest.Host, buffer.Body)
 	if err != nil {
 		return nil, err
 	}

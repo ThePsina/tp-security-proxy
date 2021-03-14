@@ -25,7 +25,7 @@ func (proxy *Proxy) proxy(w http.ResponseWriter, r *http.Request) {
 		log.Println("from proxy dump error: ", err)
 	}
 
-	req := entity.Req{Request: string(dump), Host: r.Host, Headers: http.Header{}}
+	req := entity.Req{Request: string(dump), Host: r.RequestURI, Headers: http.Header{}}
 	copyHeaders(r.Header, req.Headers)
 	if err = proxy.dm.Insert(req); err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
@@ -64,7 +64,7 @@ func (proxy *Proxy) tunnel(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	req := entity.Req{Request: string(dump), Host: r.Host, Headers: http.Header{}}
+	req := entity.Req{Request: string(dump), Host: r.RequestURI, Headers: http.Header{}}
 	copyHeaders(r.Header, req.Headers)
 	if err = proxy.dm.Insert(req); err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
