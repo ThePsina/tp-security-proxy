@@ -1,8 +1,8 @@
 package application
 
 import (
-	"proxy/pkg/domain/entity"
-	"proxy/pkg/domain/repository"
+	"proxy/internal/domain/entity"
+	"proxy/internal/domain/repository"
 )
 
 type DataManager struct {

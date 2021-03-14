@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
-	"proxy/pkg/domain/entity"
+	"proxy/internal/domain/entity"
 	"strconv"
 	"strings"
 )

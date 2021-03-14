@@ -1,6 +1,6 @@
 package repository
 
-import "proxy/pkg/domain/entity"
+import "proxy/internal/domain/entity"
 
 type ReqRepo interface {
 	Insert(entity.Req) error

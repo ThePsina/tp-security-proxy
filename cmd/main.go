@@ -10,9 +10,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"proxy/pkg/application"
-	"proxy/pkg/infrasctructure"
-	"proxy/pkg/interfaces"
+	"proxy/internal/application"
+	"proxy/internal/infrasctructure"
+	"proxy/internal/interfaces"
 	"time"
 )
 

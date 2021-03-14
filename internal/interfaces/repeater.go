@@ -5,7 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
-	"proxy/pkg/domain/entity"
+	"proxy/internal/domain/entity"
 	"strconv"
 	"strings"
 )
@@ -52,7 +52,7 @@ func createNewRequest(storedRequest entity.Req) (*http.Request, error) {
 		return nil, err
 	}
 
-	newRequest, err := http.NewRequest(buffer.Method, storedRequest.Host, buffer.Body)
+	newRequest, err := http.NewRequest(buffer.Method, storedRequest.URL, buffer.Body)
 	if err != nil {
 		return nil, err
 	}

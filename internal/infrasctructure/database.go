@@ -5,7 +5,7 @@ import (
 	"github.com/jackc/pgx"
 	"github.com/spf13/viper"
 	"net/http"
-	"proxy/pkg/domain/entity"
+	"proxy/internal/domain/entity"
 	"time"
 )
 
@@ -32,7 +32,7 @@ func (db *Database) Insert(req entity.Req) error {
 	}()
 
 	var id int64
-	err = tx.QueryRow("insert into requests (host, request) values ($1, $2) returning id", req.Host, req.Request).
+	err = tx.QueryRow("insert into requests (host, request) values ($1, $2) returning id", req.URL, req.Request).
 		Scan(&id)
 
 	for key, vval := range req.Headers {
@@ -77,7 +77,7 @@ func (db *Database) GetRequestList() ([]entity.Req, error) {
 	for out.Next() {
 		var request entity.Req
 
-		if err = out.Scan(&request.Id, &request.Host, &request.Request); err != nil {
+		if err = out.Scan(&request.Id, &request.URL, &request.Request); err != nil {
 			return []entity.Req{}, err
 		}
 
@@ -110,7 +110,7 @@ func (db *Database) GetRequestById(id int64) (entity.Req, error) {
 	out := tx.QueryRow("select request, host from requests where id=$1", id)
 
 	request := entity.Req{Id: id}
-	if err = out.Scan(&request.Request, &request.Host); err != nil {
+	if err = out.Scan(&request.Request, &request.URL); err != nil {
 		return entity.Req{}, err
 	}
 

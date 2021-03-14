@@ -2,7 +2,7 @@ package interfaces
 
 import (
 	"github.com/sirupsen/logrus"
-	"proxy/pkg/domain/repository"
+	"proxy/internal/domain/repository"
 )
 
 type Proxy struct {
