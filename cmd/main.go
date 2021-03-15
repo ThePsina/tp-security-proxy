@@ -1,17 +1,12 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/jackc/pgx"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"log"
 	"net/http"
 	"os"
-	"proxy/internal/application"
-	"proxy/internal/infrasctructure"
 	"proxy/internal/interfaces"
 	"time"
 )
@@ -36,52 +31,23 @@ func init() {
 }
 
 func main() {
-	conf := pgx.ConnConfig{
-		User:                 viper.GetString("postgres.user"),
-		Database:             viper.GetString("postgres.db"),
-		Password:             viper.GetString("postgres.password"),
-		Port:                 uint16(viper.GetInt("postgres.port")),
-		Host:                 viper.GetString("postgres.host"),
-		PreferSimpleProtocol: false,
-	}
+	proxy, repeaterRouter := interfaces.CreateProxy()
 
-	conn, err := pgx.Connect(conf)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-
-	db := infrasctructure.CreateDatabaseConnection(conn)
-	manager := application.NewDataManager(db)
-
-	proxy := interfaces.NewProxy(manager)
 	interceptor := &http.Server{
 		ReadTimeout:  viper.GetDuration("server.timeout.read") * time.Second,
 		WriteTimeout: viper.GetDuration("server.timeout.write") * time.Second,
 		Addr:         ":" + viper.GetString("server.port.interceptor"),
 		Handler:      http.HandlerFunc(proxy.Intercept),
-		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
 	}
-
-	repeaterRouter := mux.NewRouter()
-	repeaterRouter.HandleFunc("/repeat/{id}", proxy.Repeat).
-		Methods(http.MethodGet)
-	repeaterRouter.HandleFunc("/requests", proxy.AllRequests).
-		Methods(http.MethodGet)
-	repeaterRouter.HandleFunc("/request/{id}", proxy.RequestById).
-		Methods(http.MethodGet)
-	repeaterRouter.HandleFunc("/scan/{id}", proxy.ScanRequest).
-		Methods(http.MethodGet)
 
 	repeater := &http.Server{
 		ReadTimeout:  viper.GetDuration("server.timeout.read") * time.Second,
 		WriteTimeout: viper.GetDuration("server.timeout.write") * time.Second,
 		Addr:         ":" + viper.GetString("server.port.repeater"),
 		Handler:      repeaterRouter,
-		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
 	}
 
-	go func() {fmt.Println("*")
+	go func() {
 		log.Fatal(repeater.ListenAndServe())
 	}()
 

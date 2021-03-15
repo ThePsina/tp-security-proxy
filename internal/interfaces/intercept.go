@@ -34,12 +34,14 @@ func (proxy *Proxy) proxy(w http.ResponseWriter, r *http.Request) {
 
 	req := entity.Req{Request: string(dump), URL: r.RequestURI, Headers: r.Header}
 	if err = proxy.dm.Insert(req); err != nil {
+		fmt.Println("proxy.dm.Insert(req)")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 
 	resp, err := http.DefaultTransport.RoundTrip(r)
 	if err != nil {
+		fmt.Println("http.DefaultTransport.RoundTrip(r)")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -100,6 +102,7 @@ func (proxy *Proxy) tunnel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dumped, err := httputil.DumpRequest(proxy.inf.ForwardedHttpsRequest, true)
+	fmt.Println(string(dumped))
 	if err != nil {
 		proxy.logger.Error(err)
 		return

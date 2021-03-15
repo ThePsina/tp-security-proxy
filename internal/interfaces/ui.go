@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
+	"net/url"
 	"proxy/internal/domain/entity"
 	"strconv"
 	"strings"
@@ -72,14 +73,14 @@ func (proxy *Proxy) ScanRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request, err := proxy.dm.GetRequestHeaders(int64(id))
+	request, err := proxy.dm.GetRequestById(int64(id))
 	if err != nil {
 		proxy.logger.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	requests := proxy.scan(request.Headers)
+	requests := proxy.scan(request.URL)
 	var res []byte
 	if len(requests) == 0 {
 		res, err = json.Marshal("no param-miner in request")
@@ -105,14 +106,15 @@ func (proxy *Proxy) ScanRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (proxy *Proxy) scan(headers http.Header) []string {
+func (proxy *Proxy) scan(rawUrl string) []string {
 	result := make([]string, 0, 0)
 
-	for _, paramVal := range entity.Params {
-		for headerKey, headerValues := range headers {
-			for _, headerVal := range headerValues {
-				if strings.HasPrefix(headerKey, paramVal) {
-					result = append(result, headerKey+" = "+headerVal)
+	urlToScan, _ := url.Parse(rawUrl)
+	for headerKey, headerValues := range urlToScan.Query() {
+		for _, headerVal := range headerValues {
+			for _, paramVal := range entity.Params {
+				if strings.Contains(headerKey, paramVal) && len(headerKey) == len(paramVal) {
+					result = append(result, paramVal+" = "+headerVal)
 				}
 			}
 		}

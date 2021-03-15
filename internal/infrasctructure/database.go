@@ -10,19 +10,25 @@ import (
 )
 
 type Database struct {
-	connection *pgx.Conn
+	config pgx.ConnConfig
 	timing     time.Duration
 }
 
-func CreateDatabaseConnection(conn *pgx.Conn) *Database {
-	return &Database{connection: conn, timing: viper.GetDuration("db_connection.timing") * time.Second}
+func CreateDatabaseConnection(conf pgx.ConnConfig) *Database {
+	return &Database{config: conf, timing: viper.GetDuration("db_connection.timing") * time.Second}
 }
 
 func (db *Database) Insert(req entity.Req) error {
+	connection, err := pgx.Connect(db.config)
+	if err != nil {
+		return err
+	}
+	defer connection.Close()
+
 	ctx, cancel := context.WithTimeout(context.Background(), db.timing)
 	defer cancel()
 
-	tx, err := db.connection.BeginEx(ctx, nil)
+	tx, err := connection.BeginEx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -55,10 +61,16 @@ func (db *Database) Insert(req entity.Req) error {
 }
 
 func (db *Database) GetRequestList() ([]entity.Req, error) {
+	connection, err := pgx.Connect(db.config)
+	if err != nil {
+		return []entity.Req{}, err
+	}
+	defer connection.Close()
+
 	ctx, cancel := context.WithTimeout(context.Background(), db.timing)
 	defer cancel()
 
-	tx, err := db.connection.BeginEx(ctx, nil)
+	tx, err := connection.BeginEx(ctx, nil)
 	if err != nil {
 		return []entity.Req{}, err
 	}
@@ -67,7 +79,7 @@ func (db *Database) GetRequestList() ([]entity.Req, error) {
 		}
 	}()
 
-	out, err := tx.Query("select id, host, request from requests")
+	out, err := tx.Query("select id, host from requests")
 	if err != nil {
 		return []entity.Req{}, err
 	}
@@ -77,7 +89,7 @@ func (db *Database) GetRequestList() ([]entity.Req, error) {
 	for out.Next() {
 		var request entity.Req
 
-		if err = out.Scan(&request.Id, &request.URL, &request.Request); err != nil {
+		if err = out.Scan(&request.Id, &request.URL); err != nil {
 			return []entity.Req{}, err
 		}
 
@@ -95,10 +107,16 @@ func (db *Database) GetRequestList() ([]entity.Req, error) {
 }
 
 func (db *Database) GetRequestById(id int64) (entity.Req, error) {
+	connection, err := pgx.Connect(db.config)
+	if err != nil {
+		return entity.Req{}, err
+	}
+	defer connection.Close()
+
 	ctx, cancel := context.WithTimeout(context.Background(), db.timing)
 	defer cancel()
 
-	tx, err := db.connection.BeginEx(ctx, nil)
+	tx, err := connection.BeginEx(ctx, nil)
 	if err != nil {
 		return entity.Req{}, err
 	}
@@ -122,10 +140,16 @@ func (db *Database) GetRequestById(id int64) (entity.Req, error) {
 }
 
 func (db *Database) GetRequestHeaders(id int64) (entity.Req, error) {
+	connection, err := pgx.Connect(db.config)
+	if err != nil {
+		return entity.Req{}, err
+	}
+	defer connection.Close()
+
 	ctx, cancel := context.WithTimeout(context.Background(), db.timing)
 	defer cancel()
 
-	tx, err := db.connection.BeginEx(ctx, nil)
+	tx, err := connection.BeginEx(ctx, nil)
 	if err != nil {
 		return entity.Req{}, err
 	}

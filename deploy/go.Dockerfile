@@ -18,8 +18,13 @@ RUN apk upgrade --update-cache --available && \
     rm -rf /var/cache/apk/*
 
 WORKDIR /app
+
+COPY /genCerts/ca.crt /etc/ssl/certs/
+RUN apk update
+RUN apk add ca-certificates
+RUN update-ca-certificates
+
 COPY --from=build /app/bin/proxy .
-COPY /genCerts/cacert.pem /etc/ssl/certs/
 ADD . .
 
 ENTRYPOINT ["/app/proxy"]

@@ -10,6 +10,10 @@ import (
 var Params = make([]string, 0, 0)
 
 func init() {
+	if len(Params) > 0 {
+		return
+	}
+
 	inputFile, err := os.Open("/app/params")
 	if err != nil {
 		log.Fatal(err)
