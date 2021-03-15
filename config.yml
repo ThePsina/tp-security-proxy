@@ -6,8 +6,11 @@ postgres:
   password: 'postgres'
 
 server:
-  interceptor_port: 8081
-  repeater_port: 8082
+  port:
+    interceptor: 8081
+    repeater: 8082
+  gen:
+    randomInteger: 100000
   timeout:
     write: 10
     read: 10

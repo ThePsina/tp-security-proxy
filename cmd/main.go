@@ -58,7 +58,7 @@ func main() {
 	interceptor := &http.Server{
 		ReadTimeout:  viper.GetDuration("server.timeout.read") * time.Second,
 		WriteTimeout: viper.GetDuration("server.timeout.write") * time.Second,
-		Addr:         ":" + viper.GetString("server.interceptor_port"),
+		Addr:         ":" + viper.GetString("server.port.interceptor"),
 		Handler:      http.HandlerFunc(proxy.Intercept),
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
 	}
@@ -76,7 +76,7 @@ func main() {
 	repeater := &http.Server{
 		ReadTimeout:  viper.GetDuration("server.timeout.read") * time.Second,
 		WriteTimeout: viper.GetDuration("server.timeout.write") * time.Second,
-		Addr:         ":" + viper.GetString("server.repeater_port"),
+		Addr:         ":" + viper.GetString("server.port.repeater"),
 		Handler:      repeaterRouter,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
 	}

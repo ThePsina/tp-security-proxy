@@ -13,10 +13,14 @@ RUN go build -o bin/proxy ./cmd/main.go
 # Enviroment
 FROM alpine:latest
 
+RUN apk upgrade --update-cache --available && \
+    apk add openssl && \
+    rm -rf /var/cache/apk/*
+
 WORKDIR /app
 COPY --from=build /app/bin/proxy .
-ADD config.yml .
-ADD params .
+COPY /genCerts/cacert.pem /etc/ssl/certs/
+ADD . .
 
 ENTRYPOINT ["/app/proxy"]
 
