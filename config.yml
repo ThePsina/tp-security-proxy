@@ -1,0 +1,19 @@
+postgres:
+  host: 'postgres'
+  port: 5432
+  db: 'db'
+  user: 'thepsina'
+  password: 'postgres'
+
+server:
+  port:
+    interceptor: 8081
+    repeater: 8082
+  gen:
+    randomInteger: 100000
+  timeout:
+    write: 10
+    read: 10
+
+db_connection:
+  timing: 5

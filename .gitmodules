@@ -1,0 +1,3 @@
+[submodule "param-miner"]
+	path = param-miner
+	url = git@github.com:PortSwigger/param-miner.git
