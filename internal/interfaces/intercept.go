@@ -111,7 +111,7 @@ func (proxy *Proxy) tunnel(w http.ResponseWriter, r *http.Request) {
 	err = proxy.dm.Insert(entity.Req{
 		Headers: proxy.inf.ForwardedHttpsRequest.Header,
 		Request: string(dumped),
-		URL: proxy.inf.ForwardedHttpsRequest.RequestURI,
+		URL: fmt.Sprintf("https://%s%s", proxy.inf.ForwardedHttpsRequest.Host, proxy.inf.ForwardedHttpsRequest.URL.Path),
 	})
 	if err != nil {
 		proxy.logger.Error(err)

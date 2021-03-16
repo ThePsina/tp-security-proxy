@@ -104,6 +104,7 @@ func (proxy *Proxy) ScanRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// diff between longest and shortest query-param in request
 const queryDiff = 32
 
 func (proxy *Proxy) scan(storedRequest entity.Req) []string {
