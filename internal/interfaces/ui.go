@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
-	"net/url"
 	"proxy/internal/domain/entity"
 	"strconv"
-	"strings"
 )
 
 func (proxy *Proxy) AllRequests(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +78,7 @@ func (proxy *Proxy) ScanRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requests := proxy.scan(request.URL)
+	requests := proxy.scan(request)
 	var res []byte
 	if len(requests) == 0 {
 		res, err = json.Marshal("no param-miner in request")
@@ -106,19 +104,61 @@ func (proxy *Proxy) ScanRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (proxy *Proxy) scan(rawUrl string) []string {
+const queryDiff = 32
+
+func (proxy *Proxy) scan(storedRequest entity.Req) []string {
 	result := make([]string, 0, 0)
 
-	urlToScan, _ := url.Parse(rawUrl)
-	for headerKey, headerValues := range urlToScan.Query() {
-		for _, headerVal := range headerValues {
-			for _, paramVal := range entity.Params {
-				if strings.Contains(headerKey, paramVal) && len(headerKey) == len(paramVal) {
-					result = append(result, paramVal+" = "+headerVal)
-				}
-			}
-		}
+	originalLength, err := proxy.repeatForScan(storedRequest)
+	if err != nil {
+		proxy.logger.Error(err)
+		return nil
 	}
 
+	for i, param := range entity.Params {
+		if i % 500 == 0 {
+			proxy.logger.Infof("working on: %d\n", i)
+		}
+		modifiedRequest := storedRequest
+		modifiedRequest.URL = modifiedRequest.URL + "?" + param + "=1"
+
+		modifiedLength, err := proxy.repeatForScan(modifiedRequest)
+		if err != nil {
+			proxy.logger.Error(err)
+			return nil
+		}
+
+		if modifiedLength-originalLength > queryDiff {
+			proxy.logger.Infof("add to response: %s\n", param)
+			result = append(result, param)
+		}
+	}
+	proxy.logger.Info("\nwork is done")
+
 	return result
+}
+
+func (proxy *Proxy) repeatForScan(storedRequest entity.Req) (int, error) {
+	client := http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	defer client.CloseIdleConnections()
+
+	newRequest, err := createNewRequest(storedRequest)
+	if err != nil {
+		return 0, err
+	}
+
+	resp, err := client.Do(newRequest)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	resp.Header.Del("Date")
+	length := resp.Header.Get("Content-Length")
+
+	return strconv.Atoi(length)
 }
